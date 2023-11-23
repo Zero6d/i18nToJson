@@ -2,6 +2,7 @@
   "name": "i18nToJson",
   "displayName": "i18nToJson",
   "description": "convert i18n in current page to file json",
+  "publisher": "vuhieuvpz",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.84.0"
