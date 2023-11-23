@@ -9,13 +9,19 @@
   "categories": [
     "Other"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zero6d/i18nToJson.git"
+  },
   "activationEvents": [],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "i18nToJson.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "extension.extractI18nKeys",
+        "title": "i18nToJson"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",

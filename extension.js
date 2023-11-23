@@ -1,36 +1,109 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-const vscode = require('vscode');
+const vscode = require("vscode");
+const fs = require("fs");
+const path = require("path");
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+let translationsFolderPath = null;
+let translationsFileName = null;
 
-/**
- * @param {vscode.ExtensionContext} context
- */
 function activate(context) {
+  let disposable = vscode.commands.registerCommand(
+    "extension.extractI18nKeys",
+    () => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor) {
+        const document = editor.document;
+        const text = document.getText();
+        const regex = /i18n\.t\(['"](.+?)['"]\)/g;
+        const matches = [];
+        let match;
+        while ((match = regex.exec(text))) {
+          matches.push(match[1]);
+        }
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "i18nToJson" is now active!');
+        const translations = {};
+        matches.forEach((key) => {
+          translations[key] = key;
+        });
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('i18nToJson.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
+        if (translationsFolderPath && translationsFileName) {
+          const translationsFilePath = path.join(
+            translationsFolderPath,
+            translationsFileName + ".json"
+          );
+          appendTranslationsToFile(translations, translationsFilePath);
+        } else {
+          vscode.window
+            .showOpenDialog({
+              canSelectFiles: false,
+              canSelectFolders: true,
+              canSelectMany: false,
+              openLabel: "Select Folder for Translations",
+            })
+            .then((folderUri) => {
+              if (folderUri && folderUri[0]) {
+                translationsFolderPath = folderUri[0].fsPath;
+                vscode.window
+                  .showInputBox({
+                    prompt:
+                      "Enter the name of the translations file (without extension because it end with json already)",
+                    validateInput: validateFileName,
+                  })
+                  .then((fileName) => {
+                    if (fileName) {
+                      translationsFileName = fileName;
+                      const translationsFilePath = path.join(
+                        translationsFolderPath,
+                        translationsFileName + ".json"
+                      );
+                      appendTranslationsToFile(
+                        translations,
+                        translationsFilePath
+                      );
+                    }
+                  });
+              }
+            });
+        }
+      }
+    }
+  );
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from i18nToJson!');
-	});
-
-	context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
-function deactivate() {}
+function validateFileName(fileName) {
+  if (!fileName) {
+    return "Please enter a file name.";
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(fileName)) {
+    return "File name can only contain letters, numbers, underscores, and hyphens.";
+  }
+  return null;
+}
+
+function appendTranslationsToFile(translations, filePath) {
+  let existingTranslations = {};
+  try {
+    const fileContent = fs.readFileSync(filePath, "utf8");
+    existingTranslations = JSON.parse(fileContent);
+  } catch (err) {
+    // If the file doesn't exist or can't be parsed, continue with an empty object
+  }
+
+  const mergedTranslations = { ...existingTranslations, ...translations };
+  const updatedContent = JSON.stringify(mergedTranslations, null, 2);
+
+  fs.writeFile(filePath, updatedContent, (err) => {
+    if (err) {
+      vscode.window.showErrorMessage("Failed to write translations file.");
+    } else {
+      vscode.window.showInformationMessage(
+        "i18n keys extracted and appended successfully."
+      );
+    }
+  });
+}
 
 module.exports = {
-	activate,
-	deactivate
-}
+  activate,
+};
