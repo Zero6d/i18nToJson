@@ -3,7 +3,7 @@
   "displayName": "i18nToJson",
   "description": "convert i18n in current page to file json",
   "publisher": "vuhieuvpz",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.84.0"
   },
