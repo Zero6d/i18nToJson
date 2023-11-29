@@ -90,16 +90,30 @@ function appendTranslationsToFile(translations, filePath) {
     // If the file doesn't exist or can't be parsed, continue with an empty object
   }
 
-  const mergedTranslations = { ...existingTranslations, ...translations };
+  const mergedTranslations = { ...existingTranslations };
+
+  // Add new translations only if the key doesn't already exist
+  for (const key in translations) {
+    if (!mergedTranslations.hasOwnProperty(key)) {
+      mergedTranslations[key] = translations[key];
+    }
+  }
+
   const updatedContent = JSON.stringify(mergedTranslations, null, 2);
 
   fs.writeFile(filePath, updatedContent, (err) => {
     if (err) {
       vscode.window.showErrorMessage("Failed to write translations file.");
     } else {
-      vscode.window.showInformationMessage(
-        "i18n keys extracted and appended successfully."
-      );
+      const newKeysCount =
+        Object.keys(translations).length -
+        (Object.keys(mergedTranslations).length -
+          Object.keys(existingTranslations).length);
+      const message =
+        newKeysCount > 0
+          ? `${newKeysCount} new i18n keys extracted and appended successfully.`
+          : "No new i18n keys found.";
+      vscode.window.showInformationMessage(message);
     }
   });
 }
